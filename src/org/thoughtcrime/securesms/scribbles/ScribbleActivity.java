@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity;
 import org.thoughtcrime.securesms.R;
+import org.thoughtcrime.securesms.TransportOption;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -18,14 +19,14 @@ public class ScribbleActivity extends PassphraseRequiredActionBarActivity implem
 
   private static final String TAG = ScribbleActivity.class.getName();
 
-  public static final int SCRIBBLE_REQUEST_CODE       = 31424;
+  public static final int SCRIBBLE_REQUEST_CODE = 31424;
 
   @Override
   protected void onCreate(Bundle savedInstanceState, boolean ready) {
     setContentView(R.layout.scribble_activity);
 
     if (savedInstanceState == null) {
-      ScribbleFragment fragment = ScribbleFragment.newInstance(getIntent().getData(), ScribbleComposeMode.NONE);
+      ScribbleFragment fragment = ScribbleFragment.newInstance(getIntent().getData(), Optional.absent());
       getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, fragment).commit();
     }
 
@@ -36,7 +37,7 @@ public class ScribbleActivity extends PassphraseRequiredActionBarActivity implem
   }
 
   @Override
-  public void onImageEditComplete(@NonNull Uri uri, int width, int height, long size, @NonNull Optional<String> message, boolean isPush) {
+  public void onImageEditComplete(@NonNull Uri uri, int width, int height, long size, @NonNull Optional<String> message, @NonNull Optional<TransportOption> transport) {
     Intent intent = new Intent();
     intent.setData(uri);
     setResult(RESULT_OK, intent);

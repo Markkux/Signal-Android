@@ -83,7 +83,7 @@ public class SendButton extends ImageButton
   public void setDefaultTransport(TransportOption.Type type) {
     transportOptions.setDefaultTransport(type);
   }
-  
+
   public void setTransport(@NonNull TransportOption option) {
     transportOptions.setSelectedTransport(option);
   }

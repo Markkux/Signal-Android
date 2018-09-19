@@ -500,23 +500,25 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       initializeSecurity(isSecureText, isDefaultSms);
       break;
     case PICK_CAMERA:
-      int       imgWidth       = data.getIntExtra(CameraActivity.EXTRA_WIDTH, 0);
-      int       imgHeight      = data.getIntExtra(CameraActivity.EXTRA_HEIGHT, 0);
-      long      imgSize        = data.getLongExtra(CameraActivity.EXTRA_SIZE, 0);
-      boolean   isPush         = data.getBooleanExtra(CameraActivity.EXTRA_IS_PUSH, isSecureText);
-      String    message        = data.getStringExtra(CameraActivity.EXTRA_MESSAGE);
-      SlideDeck slideDeck      = new SlideDeck();
-      long      expiresIn      = recipient.getExpireMessages() * 1000L;
-      int       subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
-      boolean   initiating     = threadId == -1;
+      int             imgWidth       = data.getIntExtra(CameraActivity.EXTRA_WIDTH, 0);
+      int             imgHeight      = data.getIntExtra(CameraActivity.EXTRA_HEIGHT, 0);
+      long            imgSize        = data.getLongExtra(CameraActivity.EXTRA_SIZE, 0);
+      TransportOption transport      = data.getParcelableExtra(CameraActivity.EXTRA_TRANSPORT);
+      String          message        = data.getStringExtra(CameraActivity.EXTRA_MESSAGE);
+      SlideDeck       slideDeck      = new SlideDeck();
+      long            expiresIn      = recipient.getExpireMessages() * 1000L;
+      int             subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
+      boolean         initiating     = threadId == -1;
 
-      if (isPush && !isSecureText) {
-        sendButton.setDefaultTransport(Type.TEXTSECURE);
+      if (transport != null) {
+        sendButton.setTransport(transport);
+      } else {
+        transport = sendButton.getSelectedTransport();
       }
 
       slideDeck.addSlide(new ImageSlide(this, data.getData(), imgSize, imgWidth, imgHeight));
 
-      sendMediaMessage(!isPush, message, slideDeck, Collections.emptyList(), expiresIn, subscriptionId, initiating);
+      sendMediaMessage(transport.isSms(), message, slideDeck, Collections.emptyList(), expiresIn, subscriptionId, initiating);
       break;
     }
   }
@@ -2134,7 +2136,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                  .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video))
                  .onAllGranted(() -> {
                    composeText.clearFocus();
-                   startActivityForResult(CameraActivity.getIntent(ConversationActivity.this, isSecureText), PICK_CAMERA);
+                   startActivityForResult(CameraActivity.getIntent(ConversationActivity.this, sendButton.getSelectedTransport()), PICK_CAMERA);
                  })
                  .onAnyDenied(() -> Toast.makeText(ConversationActivity.this, R.string.ConversationActivity_signal_needs_camera_permissions_to_take_photos_or_video, Toast.LENGTH_LONG).show())
                  .execute();

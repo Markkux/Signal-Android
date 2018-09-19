@@ -11,11 +11,11 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import org.thoughtcrime.securesms.R;
+import org.thoughtcrime.securesms.TransportOption;
 import org.thoughtcrime.securesms.components.GlideDrawableListeningTarget;
 import org.thoughtcrime.securesms.logging.Log;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader;
 import org.thoughtcrime.securesms.mms.GlideApp;
-import org.thoughtcrime.securesms.scribbles.ScribbleComposeMode;
 import org.thoughtcrime.securesms.scribbles.ScribbleFragment;
 import org.thoughtcrime.securesms.util.concurrent.AssertedSuccessListener;
 import org.thoughtcrime.securesms.util.concurrent.SettableFuture;
@@ -29,21 +29,21 @@ public class CameraActivity extends AppCompatActivity implements CameraFragment.
 
   private static final String TAG_CAMERA  = "camera";
   private static final String TAG_EDITOR  = "editor";
-  private static final String KEY_IS_PUSH = "is_push";
 
-  public static final String EXTRA_MESSAGE = "message";
-  public static final String EXTRA_IS_PUSH = "is_push";
-  public static final String EXTRA_WIDTH   = "width";
-  public static final String EXTRA_HEIGHT  = "height";
-  public static final String EXTRA_SIZE    = "size";
+  private static final String KEY_TRANSPORT = "transport";
 
-  private ImageView snapshot;
-  private boolean   isPush;
+  public static final String EXTRA_MESSAGE   = "message";
+  public static final String EXTRA_TRANSPORT = "transport";
+  public static final String EXTRA_WIDTH     = "width";
+  public static final String EXTRA_HEIGHT    = "height";
+  public static final String EXTRA_SIZE      = "size";
 
+  private ImageView       snapshot;
+  private TransportOption transport;
 
-  public static Intent getIntent(@NonNull Context context, boolean isPush) {
+  public static Intent getIntent(@NonNull Context context, @NonNull TransportOption transport) {
     Intent intent = new Intent(context, CameraActivity.class);
-    intent.putExtra(KEY_IS_PUSH, isPush);
+    intent.putExtra(KEY_TRANSPORT, transport);
     return intent;
   }
 
@@ -52,15 +52,14 @@ public class CameraActivity extends AppCompatActivity implements CameraFragment.
     super.onCreate(savedInstanceState);
     setContentView(R.layout.camera_activity);
 
-    snapshot = findViewById(R.id.camera_snapshot);
-    isPush   = getIntent().getBooleanExtra(KEY_IS_PUSH, false);
+    snapshot  = findViewById(R.id.camera_snapshot);
+    transport = getIntent().getParcelableExtra(KEY_TRANSPORT);
 
     if (savedInstanceState == null) {
       CameraFragment fragment = CameraFragment.newInstance();
       getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, fragment, TAG_CAMERA).commit();
     }
   }
-
 
   @Override
   public void onBackPressed() {
@@ -87,7 +86,7 @@ public class CameraActivity extends AppCompatActivity implements CameraFragment.
     result.addListener(new AssertedSuccessListener<Boolean>() {
       @Override
       public void onSuccess(Boolean result) {
-        ScribbleFragment fragment = ScribbleFragment.newInstance(uri, isPush ? ScribbleComposeMode.PUSH : ScribbleComposeMode.SMS);
+        ScribbleFragment fragment = ScribbleFragment.newInstance(uri, Optional.of(transport));
         getSupportFragmentManager().beginTransaction()
                                    .replace(R.id.fragment_container, fragment, TAG_EDITOR)
                                    .addToBackStack(null)
@@ -107,14 +106,14 @@ public class CameraActivity extends AppCompatActivity implements CameraFragment.
   }
 
   @Override
-  public void onImageEditComplete(@NonNull Uri uri, int width, int height, long size, @NonNull Optional<String> message, boolean isPush) {
+  public void onImageEditComplete(@NonNull Uri uri, int width, int height, long size, @NonNull Optional<String> message, @NonNull Optional<TransportOption> transport) {
     Intent intent = new Intent();
     intent.setData(uri);
     intent.putExtra(EXTRA_WIDTH, width);
     intent.putExtra(EXTRA_HEIGHT, height);
     intent.putExtra(EXTRA_SIZE, size);
     intent.putExtra(EXTRA_MESSAGE, message.or(""));
-    intent.putExtra(EXTRA_IS_PUSH, isPush);
+    intent.putExtra(EXTRA_TRANSPORT, transport.orNull());
     setResult(RESULT_OK, intent);
     finish();
   }

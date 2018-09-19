@@ -138,7 +138,7 @@ public class ScribbleHud extends InputAwareLayout implements ViewTreeObserver.On
 
     saveButton.setOnClickListener(v -> {
       if (eventListener != null) {
-        eventListener.onEditComplete(Optional.absent(), false);
+        eventListener.onEditComplete(Optional.absent(), Optional.absent());
       }
       setMode(Mode.NONE);
     });
@@ -182,31 +182,23 @@ public class ScribbleHud extends InputAwareLayout implements ViewTreeObserver.On
 
     sendButton.setOnClickListener(v -> {
       if (eventListener != null) {
-        eventListener.onEditComplete(Optional.of(composeText.getTextTrimmed()), !sendButton.getSelectedTransport().isSms());
+        eventListener.onEditComplete(Optional.of(composeText.getTextTrimmed()), Optional.of(sendButton.getSelectedTransport()));
       }
       setMode(Mode.NONE);
     });
 
     setMode(Mode.NONE);
-    setIsSendMode(ScribbleComposeMode.NONE);
+    setTransport(Optional.absent());
   }
 
-  public void setIsSendMode(ScribbleComposeMode composeMode) {
-    switch (composeMode) {
-      case NONE:
-    }
-    if (composeMode == ScribbleComposeMode.NONE) {
-      saveButton.setVisibility(VISIBLE);
-      inputContainer.setVisibility(GONE);
-    } else {
+  public void setTransport(@NonNull Optional<TransportOption> transport) {
+    if (transport.isPresent()) {
       saveButton.setVisibility(GONE);
       inputContainer.setVisibility(VISIBLE);
-
-      if (composeMode == ScribbleComposeMode.PUSH) {
-        sendButton.setDefaultTransport(TransportOption.Type.TEXTSECURE);
-      } else {
-        sendButton.setDefaultTransport(TransportOption.Type.SMS);
-      }
+      sendButton.setTransport(transport.get());
+    } else {
+      saveButton.setVisibility(VISIBLE);
+      inputContainer.setVisibility(GONE);
     }
   }
 
@@ -384,6 +376,6 @@ public class ScribbleHud extends InputAwareLayout implements ViewTreeObserver.On
     void onColorChange(int color);
     void onUndo();
     void onDelete();
-    void onEditComplete(@NonNull Optional<String> message, boolean isPush);
+    void onEditComplete(@NonNull Optional<String> message, @NonNull Optional<TransportOption> transport);
   }
 }
