@@ -61,6 +61,7 @@ public class CameraActivity extends AppCompatActivity implements CameraFragment.
     }
   }
 
+
   @Override
   public void onBackPressed() {
     ScribbleFragment fragment = (ScribbleFragment) getSupportFragmentManager().findFragmentByTag(TAG_EDITOR);

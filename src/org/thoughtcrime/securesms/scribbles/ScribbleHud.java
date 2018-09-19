@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.scribbles;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,8 +12,7 @@ import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import org.thoughtcrime.securesms.R;
@@ -25,7 +25,6 @@ import org.thoughtcrime.securesms.components.emoji.EmojiToggle;
 import org.thoughtcrime.securesms.scribbles.widget.ColorPaletteAdapter;
 import org.thoughtcrime.securesms.scribbles.widget.VerticalSlideColorPicker;
 import org.thoughtcrime.securesms.util.CharacterCalculator.CharacterState;
-import org.thoughtcrime.securesms.util.ViewUtil;
 import org.thoughtcrime.securesms.util.views.Stub;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -36,7 +35,7 @@ import java.util.Set;
  * The HUD (heads-up display) that contains all of the tools for interacting with
  * {@link org.thoughtcrime.securesms.scribbles.widget.ScribbleView}
  */
-public class ScribbleHud extends InputAwareLayout {
+public class ScribbleHud extends InputAwareLayout implements ViewTreeObserver.OnGlobalLayoutListener {
 
   private View                     drawButton;
   private View                     highlightButton;
@@ -57,6 +56,9 @@ public class ScribbleHud extends InputAwareLayout {
 
   private EventListener       eventListener;
   private ColorPaletteAdapter colorPaletteAdapter;
+  private int visibleHeight;
+
+  private final Rect visibleBounds = new Rect();
 
   public ScribbleHud(@NonNull Context context) {
     super(context);
@@ -71,6 +73,33 @@ public class ScribbleHud extends InputAwareLayout {
   public ScribbleHud(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
     initialize();
+  }
+
+  @Override
+  protected void onAttachedToWindow() {
+    super.onAttachedToWindow();
+    getRootView().getViewTreeObserver().addOnGlobalLayoutListener(this);
+  }
+
+  @Override
+  protected void onDetachedFromWindow() {
+    super.onDetachedFromWindow();
+    getRootView().getViewTreeObserver().removeGlobalOnLayoutListener(this);
+  }
+
+  @Override
+  public void onGlobalLayout() {
+    getRootView().getWindowVisibleDisplayFrame(visibleBounds);
+
+    int currentVisibleHeight = visibleBounds.height();
+
+    if (currentVisibleHeight != visibleHeight) {
+      getLayoutParams().height = currentVisibleHeight;
+      layout(visibleBounds.left, visibleBounds.top, visibleBounds.right, visibleBounds.bottom);
+      requestLayout();
+
+      visibleHeight = currentVisibleHeight;
+    }
   }
 
   private void initialize() {
